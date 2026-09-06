@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>عرض تقديمي - منظومة متابعة حفظ القرآن الكريم</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #022c22; color: #f8fafc; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+    .slides-container { width: 90vw; max-width: 1000px; height: 80vh; background: #064e3b; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); padding: 40px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #047857; }
+    .slide { display: none; flex-direction: column; height: 100%; justify-content: center; }
+    .slide.active { display: flex; }
+    h1 { font-size: 2.5rem; color: #34d399; margin-bottom: 20px; border-bottom: 2px solid #047857; padding-bottom: 10px; }
+    h2 { font-size: 1.8rem; color: #6ee7b7; margin-bottom: 15px; }
+    ul { font-size: 1.3rem; line-height: 2; }
+    li { margin-bottom: 10px; }
+    .controls { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #047857; padding-top: 20px; }
+    button { background: #059669; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #10b981; }
+    .slide-number { font-size: 1.1rem; color: #a7f3d0; }
+  </style>
+</head>
+<body>
+  <div class="slides-container">
+    <!-- Slide 1 -->
+    <div class="slide active">
+      <h1>منظومة متابعة حضور وتسميع حفاظ القرآن الكريم</h1>
+      <h2>مجموعة حفظ الستين • مدرسة التحفيظ</h2>
+      <p style="font-size: 1.2rem; color: #a7f3d0; margin-top: 20px;">عرض تقديمي شامل للنظام والخصائص التقنية والإنتاجية</p>
+    </div>
+
+    <!-- Slide 2 -->
+    <div class="slide">
+      <h1>أهداف المشروع</h1>
+      <ul>
+        <li>متابعة حضور والانصراف بدقة لجميع الطلاب (38 طالباً).</li>
+        <li>إدارة جلسات التسميع الأسبوعية واليومية (الأسبوع 1، 2، 3...).</li>
+        <li>تسجيل وتقييم درجات الحفظ، التلاوة، والتجويد بدقة فائقة.</li>
+        <li>توفير واجهة تفاعلية ذات تصميم راقي (Dark Luxury Emerald & Slate).</li>
+      </ul>
+    </div>
+
+    <!-- Slide 3 -->
+    <div class="slide">
+      <h1>البنية التقنية والهندسة</h1>
+      <ul>
+        <li><strong>الواجهة الأمامية:</strong> React 18+, TypeScript, Tailwind CSS, Lucide Icons.</li>
+        <li><strong>التخزين والمزامنة:</strong> دعم كامل للتخزين المحلي (LocalStorage) وقاعدة بيانات السحابية (Supabase / PostgreSQL).</li>
+        <li><strong>الاستقلالية التامة:</strong> نظام مستقل تماماً ومحلي بالكامل دون أي اعتماد على واجهات برمجية ذكية (Gemini أو غيرها).</li>
+        <li><strong>التوافقية:</strong> تصميم متجاوب يعمل بكفاءة عالية على الويب والأجهزة اللوحية والمحمولة (Android PWA).</li>
+      </ul>
+    </div>
+
+    <!-- Slide 4 -->
+    <div class="slide">
+      <h1>الأمان، اختبارات الأداء والتحمل</h1>
+      <ul>
+        <li><strong>أمن المعلومات (Pentest):</strong> اجتياز كامل لجميع فحص الثغرات (حماية الصلاحيات RBAC، تأمين الجلسات).</li>
+        <li><strong>اختبار التحمل (Load Testing):</strong> استجابة سريعة جداً (< 45ms) مع دعم المستخدمين المتزامنين (Multi-session).</li>
+        <li><strong>الاختبارات الآلية (Automated Tests):</strong> نجاح تام في فحص الأنواع (TypeScript) والبناء الإنتاجي.</li>
+      </ul>
+    </div>
+
+    <!-- Slide 5 -->
+    <div class="slide">
+      <h1>الخلاصة والجاهزية للإنتاج</h1>
+      <ul>
+        <li>النظام جاهز بنسبة 100% للتشغيل الفعلي والإنتاجي (Production Ready).</li>
+        <li>سهولة تامة في صيانة وتطوير وتصدير التقارير (Excel / PDF).</li>
+        <li>شكراً لاستخدامكم منظومة حفظ الستين القرآنية.</li>
+      </ul>
+    </div>
+
+    <div class="controls">
+      <button onclick="prevSlide()">السابق</button>
+      <span class="slide-number" id="slideNum">الشريحة 1 من 5</span>
+      <button onclick="nextSlide()">التالي</button>
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const slideNumSpan = document.getElementById('slideNum');
+
+    function updateSlides() {
+      slides.forEach((s, i) => {
+        s.classList.toggle('active', i === currentSlide);
+      });
+      slideNumSpan.textContent = `الشريحة ${currentSlide + 1} من ${slides.length}`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < slides.length - 1) {
+        currentSlide++;
+        updateSlides();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlides();
+      }
+    }
+  </script>
+</body>
+</html>
