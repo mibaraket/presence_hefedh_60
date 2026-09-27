@@ -9,8 +9,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>منظومة حفظ الستين - تطبيق أندرويد</title>
-    <meta name="description" content="تطبيق أندرويد لمتابعة الحضور وتسميع القرآن الكريم - مجموعة حفظ الستين." />
+    <meta name="description" content="تطبيق أندرويد لمتابعة الحضور وتسميع القرآن الكريم لمجموعة حفظ الستين مع إدارة الجلسات وقوائم التسميع والتكرار." />
+    <meta name="application-name" content="منظومة حفظ الستين" />
+    <meta property="og:title" content="منظومة حفظ الستين - تطبيق أندرويد" />
+    <meta property="og:description" content="تطبيق أندرويد لمتابعة الحضور وتسميع القرآن الكريم لمجموعة حفظ الستين مع إدارة الجلسات وقوائم التسميع والتكرار." />
+    <meta property="og:image" content="/icon-512.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -18,6 +24,19 @@
   <body class="bg-slate-950 text-slate-100 font-['Cairo',sans-serif]">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+              console.log('ServiceWorker registered with scope:', registration.scope);
+            })
+            .catch(function(err) {
+              console.log('ServiceWorker registration failed:', err);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
 
