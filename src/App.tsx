@@ -4,15 +4,16 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Header } from './components/Header';
+import { Header, NavTab } from './components/Header';
 import { CheckInTab } from './components/CheckInTab';
 import { RecitationQueueTab } from './components/RecitationQueueTab';
-import { ExamsTab } from './components/ExamsTab';
-import { AttendanceTableTab } from './components/AttendanceTableTab';
 import { StudentsRosterTab } from './components/StudentsRosterTab';
+import { AndroidBottomNav } from './components/AndroidBottomNav';
 import { MonthlyReportModal } from './components/MonthlyReportModal';
 import { NewSessionModal } from './components/NewSessionModal';
 import { DatabaseModal } from './components/DatabaseModal';
+import { InstallApkModal } from './components/InstallApkModal';
+import { AdminConfigModal } from './components/AdminConfigModal';
 import { 
   Student, 
   Session, 
@@ -21,6 +22,8 @@ import {
   ExamRecord, 
   ExamEntity,
   AppUser,
+  Branch,
+  TeacherEntity,
   cycleParticipation,
   normalizeParticipation
 } from './types';
@@ -28,10 +31,13 @@ import {
   loadStoredData, 
   saveStoredData, 
   formatDateTimeArabic, 
-  recomputeAllAttendanceRates 
+  recomputeAllAttendanceRates,
+  loadStoredBranches,
+  saveStoredBranches,
+  loadStoredTeachers,
+  saveStoredTeachers
 } from './utils/storage';
 import { exportAttendanceToExcel } from './utils/excel';
-import { soundManager } from './utils/sound';
 import { 
   getCurrentUser, 
   setCurrentUser as saveCurrentUser, 
@@ -43,7 +49,7 @@ import { LoginScreen } from './components/LoginModal';
 
 export default function App() {
   const [currentUser, setCurrentUserState] = useState<AppUser | null>(() => getCurrentUser());
-  const [activeTab, setActiveTab] = useState<'checkin' | 'recitation_queue' | 'exams' | 'table' | 'students'>('checkin');
+  const [activeTab, setActiveTab] = useState<NavTab>('checkin');
   
   // Data State
   const [students, setStudents] = useState<Student[]>([]);
@@ -55,10 +61,34 @@ export default function App() {
   const [institutionName, setInstitutionName] = useState<string>('مجموعة حفظ الستين - مدرسة التحفيظ');
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
 
+  // General Configuration: Branches & Teachers
+  const [branches, setBranches] = useState<Branch[]>(() => loadStoredBranches());
+  const [teachers, setTeachers] = useState<TeacherEntity[]>(() => loadStoredTeachers());
+  const [adminSelectedBranchId, setAdminSelectedBranchId] = useState<string>('ALL');
+
   // Modals
   const [isNewSessionModalOpen, setIsNewSessionModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState(false);
+  const [isApkModalOpen, setIsApkModalOpen] = useState(false);
+  const [isAdminConfigOpen, setIsAdminConfigOpen] = useState(false);
+
+  // Security Guard: Enseignant can ONLY see tab 1 and tab 2
+  useEffect(() => {
+    if (currentUser?.role === 'TEACHER' && activeTab === 'students') {
+      setActiveTab('checkin');
+    }
+  }, [currentUser, activeTab]);
+
+  const handleUpdateBranches = (newBranches: Branch[]) => {
+    setBranches(newBranches);
+    saveStoredBranches(newBranches);
+  };
+
+  const handleUpdateTeachers = (newTeachers: TeacherEntity[]) => {
+    setTeachers(newTeachers);
+    saveStoredTeachers(newTeachers);
+  };
 
   // Load Initial Data on Mount
   useEffect(() => {
@@ -94,9 +124,56 @@ export default function App() {
     setLastSyncTime(new Date().toLocaleTimeString('ar-TN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) || new Date().toLocaleTimeString());
   };
 
+  // Scoped Sessions based on User Role & Branch:
+  // Admin sees all sessions or filters by chosen branch.
+  // Branch Admin / Teacher sees their branch sessions.
+  const scopedSessions = useMemo(() => {
+    if (!currentUser) return sessions;
+    if (currentUser.role === 'ADMIN') {
+      if (adminSelectedBranchId === 'ALL') return sessions;
+      const targetBranch = branches.find(b => b.id === adminSelectedBranchId);
+      return sessions.filter((s) => 
+        s.branchId === adminSelectedBranchId || 
+        (targetBranch && s.branchName === targetBranch.name)
+      );
+    }
+    if (currentUser.branchId || currentUser.branchName) {
+      return sessions.filter((s) => 
+        s.branchId === currentUser.branchId || 
+        (currentUser.branchName && (s.branchName === currentUser.branchName || (s.room && s.room.includes(currentUser.branchName)))) ||
+        (!s.branchId && !s.branchName)
+      );
+    }
+    return sessions;
+  }, [sessions, currentUser, adminSelectedBranchId, branches]);
+
+  // Scoped Students based on User Role & Branch:
+  // Admin sees all students or filters by chosen branch.
+  // Branch Admin / Teacher sees their branch students.
+  const scopedStudents = useMemo(() => {
+    if (!currentUser) return students;
+    if (currentUser.role === 'ADMIN') {
+      if (adminSelectedBranchId === 'ALL') return students;
+      const targetBranch = branches.find(b => b.id === adminSelectedBranchId);
+      return students.filter((st) => 
+        st.branchId === adminSelectedBranchId || 
+        (targetBranch && st.branchName === targetBranch.name)
+      );
+    }
+    if (currentUser.branchId || currentUser.branchName) {
+      return students.filter((st) => 
+        st.branchId === currentUser.branchId || 
+        (currentUser.branchName && st.branchName === currentUser.branchName) ||
+        (!st.branchId && !st.branchName)
+      );
+    }
+    return students;
+  }, [students, currentUser, adminSelectedBranchId, branches]);
+
   const activeSession = useMemo(() => {
-    return sessions.find((s) => s.id === activeSessionId) || sessions[0] || null;
-  }, [sessions, activeSessionId]);
+    const list = scopedSessions.length > 0 ? scopedSessions : sessions;
+    return list.find((s) => s.id === activeSessionId) || list[0] || null;
+  }, [scopedSessions, sessions, activeSessionId]);
 
   // Mark Attendance via Unique ID
   const handleMarkAttendance = (
@@ -247,9 +324,6 @@ export default function App() {
     const existing = records.find((r) => r.id === recordId);
     if (existing) {
       const nextStatus = cycleParticipation(existing.recitation);
-      if (nextStatus === 'CONFIRMED') {
-        soundManager.playSuccess();
-      }
       handleUpdateRecord(recordId, { recitation: nextStatus });
     } else {
       const parts = recordId.split('_');
@@ -348,15 +422,26 @@ export default function App() {
 
   // Create a new session with all students loaded automatically
   const handleCreateSession = (newSession: Session) => {
-    const updatedSessions = [newSession, ...sessions];
+    const assignedBranch = branches.find(b => b.id === newSession.branchId);
+    const sessionWithBranch: Session = {
+      ...newSession,
+      branchId: newSession.branchId || currentUser?.branchId,
+      branchName: newSession.branchName || assignedBranch?.name || currentUser?.branchName
+    };
+    const updatedSessions = [sessionWithBranch, ...sessions];
     
-    const newRecordsForSession: AttendanceRecord[] = students.map((st) => ({
-      id: `${newSession.id}_${st.id}`,
+    // Create attendance records for students belonging to this branch (or all if general)
+    const targetStudents = sessionWithBranch.branchId
+      ? students.filter(st => st.branchId === sessionWithBranch.branchId || !st.branchId)
+      : (scopedStudents.length > 0 ? scopedStudents : students);
+
+    const newRecordsForSession: AttendanceRecord[] = targetStudents.map((st) => ({
+      id: `${sessionWithBranch.id}_${st.id}`,
       studentId: st.id,
       studentName: `${st.lastName} ${st.firstName}`,
-      sessionId: newSession.id,
-      sessionTitle: `${newSession.title} (${newSession.date})`,
-      sessionDate: newSession.date,
+      sessionId: sessionWithBranch.id,
+      sessionTitle: `${sessionWithBranch.title} (${sessionWithBranch.date})`,
+      sessionDate: sessionWithBranch.date,
       status: 'ABSENT',
       entryTimestamp: null,
       attendanceRate: 0,
@@ -368,7 +453,7 @@ export default function App() {
     let combinedRecords = [...records, ...newRecordsForSession];
     combinedRecords = recomputeAllAttendanceRates(combinedRecords, students);
 
-    persistState(students, updatedSessions, combinedRecords, newSession.id, exams);
+    persistState(students, updatedSessions, combinedRecords, sessionWithBranch.id, exams);
   };
 
   // Close session action
@@ -380,8 +465,6 @@ export default function App() {
 
     let updatedRecords = recomputeAllAttendanceRates(records, students);
     persistState(students, updatedSessions, updatedRecords, sessionId, exams);
-
-    soundManager.playSuccess();
 
     exportAttendanceToExcel(
       updatedRecords,
@@ -425,11 +508,16 @@ export default function App() {
 
   // Add individual student
   const handleAddStudent = (newStudent: Student) => {
-    const updatedStudents = [...students, newStudent];
+    const studentWithBranch: Student = {
+      ...newStudent,
+      branchId: newStudent.branchId || currentUser?.branchId,
+      branchName: newStudent.branchName || currentUser?.branchName
+    };
+    const updatedStudents = [...students, studentWithBranch];
     const newRecords: AttendanceRecord[] = sessions.map((sess) => ({
-      id: `${sess.id}_${newStudent.id}`,
-      studentId: newStudent.id,
-      studentName: `${newStudent.lastName} ${newStudent.firstName}`,
+      id: `${sess.id}_${studentWithBranch.id}`,
+      studentId: studentWithBranch.id,
+      studentName: `${studentWithBranch.lastName} ${studentWithBranch.firstName}`,
       sessionId: sess.id,
       sessionTitle: `${sess.title} (${sess.date})`,
       sessionDate: sess.date,
@@ -589,36 +677,39 @@ export default function App() {
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        sessions={sessions}
+        sessions={scopedSessions}
         activeSession={activeSession}
         onSelectSession={(id) => setActiveSessionId(id)}
         onOpenNewSession={() => setIsNewSessionModalOpen(true)}
         onOpenReportModal={() => setIsReportModalOpen(true)}
         onOpenDatabaseModal={() => setIsDatabaseModalOpen(true)}
+        onOpenApkModal={() => setIsApkModalOpen(true)}
+        onOpenAdminConfig={() => setIsAdminConfigOpen(true)}
         onExportExcel={handleExportExcel}
         institutionName={institutionName}
         currentUser={currentUser}
         onLogout={handleLogout}
         onSwitchProfile={handleSwitchProfile}
         onAddProfile={() => setCurrentUserState(null)}
+        branches={branches}
+        selectedBranchId={adminSelectedBranchId}
+        onSelectBranch={(bId) => setAdminSelectedBranchId(bId)}
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-4 pb-20 sm:pb-6">
         
         {/* Tab 1: تسجيل الحضور الفوري بالمعرف الوحيد */}
         {activeTab === 'checkin' && (
           <CheckInTab
-            students={students}
-            sessions={sessions}
+            students={scopedStudents}
+            sessions={scopedSessions}
             activeSession={activeSession}
             records={records}
-            onMarkAttendance={handleMarkAttendance}
             onUpdateStatus={handleUpdateStatus}
             onCycleRecitation={handleCycleRecitation}
             onCycleOral={handleCycleOral}
-            onUpdateNote={handleUpdateNote}
-            onExportExcel={handleExportExcel}
+            onMarkAllPresent={handleMarkAllPresent}
             onCloseSession={handleCloseSession}
           />
         )}
@@ -626,8 +717,8 @@ export default function App() {
         {/* Tab 2: قوائم وتناوب التلاوة والتكرار */}
         {activeTab === 'recitation_queue' && (
           <RecitationQueueTab
-            students={students}
-            sessions={sessions}
+            students={scopedStudents}
+            sessions={scopedSessions}
             records={records}
             activeSession={activeSession}
             onCycleRecitation={handleCycleRecitation}
@@ -644,94 +735,42 @@ export default function App() {
           />
         )}
 
-        {/* Tab 3: سجل الاختبارات والدرجات */}
-        {activeTab === 'exams' && (
-          <ExamsTab
-            students={students}
-            exams={exams}
-            examEntities={examEntities}
-            onAddExamEntity={handleAddExamEntity}
-            onDeleteExamEntity={handleDeleteExamEntity}
-            onSaveCandidateScore={handleSaveCandidateScore}
-            onDeleteCandidateScore={handleDeleteCandidateScore}
-            onAddExam={handleAddExam}
-            onDeleteExam={handleDeleteExam}
-          />
-        )}
-
-        {/* Tab 4: سجل الحضور والمتابعة الشامل */}
-        {activeTab === 'table' && (
-          <AttendanceTableTab
-            records={records}
-            sessions={sessions}
-            students={students}
-            onUpdateStatus={handleUpdateStatus}
-            onCycleRecitation={handleCycleRecitation}
-            onCycleOral={handleCycleOral}
-            onUpdateNote={handleUpdateNote}
-            onExportExcel={handleExportExcel}
-          />
-        )}
-
-        {/* Tab 5: إدارة الطلاب واستيراد الإكسيل */}
-        {activeTab === 'students' && (
+        {/* Tab 3: إدارة الطلاب واستيراد الإكسيل (فقط للمدير ومسؤول الفرع) */}
+        {activeTab === 'students' && currentUser.role !== 'TEACHER' && (
           <StudentsRosterTab
-            students={students}
+            students={scopedStudents}
             onImportStudents={handleImportStudents}
             onAddStudent={handleAddStudent}
             onUpdateStudent={handleUpdateStudent}
             onDeleteStudent={handleDeleteStudent}
+            onOpenReportModal={() => setIsReportModalOpen(true)}
+            onExportExcel={handleExportExcel}
           />
         )}
 
       </main>
 
-      {/* Real-time Status Bar Footer */}
-      <footer className="bg-slate-900/90 border-t border-slate-800 px-6 sm:px-8 py-3.5 shrink-0 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-400 gap-2">
+      {/* Discrete Status Bar Footer (Desktop view) */}
+      <footer className="hidden sm:flex bg-slate-900/90 border-t border-slate-800 px-6 py-2.5 shrink-0 justify-between items-center text-xs text-slate-400">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 animate-pulse"></span>
-          <p className="text-slate-300 font-medium">
-            حالة البيانات : <strong className="text-emerald-400">سحابية ومحفوظة تلقائياً</strong> • آخر حفظ: {lastSyncTime}
+          <p className="text-slate-300 font-medium text-[11px]">
+            حالة البيانات: <strong className="text-emerald-400">سحابية ومحفوظة تلقائياً</strong> • آخر مزامنة: {lastSyncTime}
           </p>
         </div>
 
-        <div className="flex items-center gap-4 text-xs flex-wrap justify-center font-medium">
-          <button
-            onClick={() => setActiveTab('recitation_queue')}
-            className="hover:text-emerald-400 transition-colors text-slate-400"
-          >
-            قوائم وتناوب
-          </button>
-          <span className="text-slate-700">•</span>
-          <button
-            onClick={() => setActiveTab('exams')}
-            className="hover:text-emerald-400 transition-colors text-slate-400"
-          >
-            الاختبارات ({exams.length})
-          </button>
-          <span className="text-slate-700">•</span>
-          <button
-            onClick={() => setActiveTab('students')}
-            className="hover:text-emerald-400 transition-colors text-slate-400"
-          >
-            الحفاظ ({students.length})
-          </button>
-          <span className="text-slate-700">•</span>
-          <button
-            onClick={() => setIsReportModalOpen(true)}
-            className="hover:text-emerald-400 transition-colors text-slate-400"
-          >
-            تقرير PDF
-          </button>
-          <span className="text-slate-700">•</span>
-          <button
-            onClick={() => setIsDatabaseModalOpen(true)}
-            className="hover:text-emerald-400 transition-colors text-emerald-400/90"
-          >
-            قاعدة Supabase
-          </button>
+        <div className="text-[11px] text-slate-500 font-medium">
+          تطبيق أندرويد • منظومة حفظ الستين • {currentUser.roleLabel || currentUser.role}
         </div>
       </footer>
+
+      {/* Android Mobile Bottom Navigation Bar */}
+      <AndroidBottomNav
+        activeTab={activeTab}
+        onSelectTab={(tab) => setActiveTab(tab)}
+        studentsCount={scopedStudents.length}
+        userRole={currentUser.role}
+      />
 
       {/* Modal: New Session */}
       <NewSessionModal
@@ -739,14 +778,27 @@ export default function App() {
         onClose={() => setIsNewSessionModalOpen(false)}
         onCreateSession={handleCreateSession}
         teacherDefaultName={currentUser.name}
+        branchName={
+          adminSelectedBranchId !== 'ALL'
+            ? branches.find(b => b.id === adminSelectedBranchId)?.name || currentUser.branchName || 'الفرع الرئيسي'
+            : currentUser.branchName || 'الفرع الرئيسي'
+        }
+        branchId={
+          adminSelectedBranchId !== 'ALL'
+            ? adminSelectedBranchId
+            : currentUser.branchId
+        }
+        teachers={teachers}
+        branches={branches}
+        userRole={currentUser.role}
       />
 
       {/* Modal: Monthly PDF Report */}
       <MonthlyReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
-        students={students}
-        sessions={sessions}
+        students={scopedStudents}
+        sessions={scopedSessions}
         records={records}
         institutionName={institutionName}
         onUpdateInstitutionName={(name) => {
@@ -759,6 +811,23 @@ export default function App() {
       <DatabaseModal
         isOpen={isDatabaseModalOpen}
         onClose={() => setIsDatabaseModalOpen(false)}
+      />
+
+      {/* Modal: Android APK & WebAPK Installation */}
+      <InstallApkModal
+        isOpen={isApkModalOpen}
+        onClose={() => setIsApkModalOpen(false)}
+      />
+
+      {/* Modal: Admin General Configuration (Branches, Teachers, Accounts) */}
+      <AdminConfigModal
+        isOpen={isAdminConfigOpen}
+        onClose={() => setIsAdminConfigOpen(false)}
+        branches={branches}
+        teachers={teachers}
+        onUpdateBranches={handleUpdateBranches}
+        onUpdateTeachers={handleUpdateTeachers}
+        currentUser={currentUser}
       />
 
     </div>

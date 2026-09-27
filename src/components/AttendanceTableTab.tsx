@@ -5,14 +5,13 @@ import {
   RotateCcw, 
   Calendar, 
   BookOpen, 
-  Mic, 
+  Repeat, 
   Check, 
   Clock, 
   FileSpreadsheet, 
   CheckCircle2, 
   UserX, 
-  SlidersHorizontal,
-  Edit3
+  SlidersHorizontal
 } from 'lucide-react';
 import { 
   Student, 
@@ -262,14 +261,13 @@ export const AttendanceTableTab: React.FC<AttendanceTableTabProps> = ({
                 <th className="py-3 px-3 min-w-[120px] text-center">حالة الحضور</th>
                 <th className="py-3 px-3 min-w-[130px] text-center">التلاوة (نقر للتبديل)</th>
                 <th className="py-3 px-3 min-w-[130px] text-center">تكرار (نقر للتبديل)</th>
-                <th className="py-3 px-4 min-w-[180px]">ملاحظة</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-slate-800/60">
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500 text-xs">
+                  <td colSpan={6} className="py-12 text-center text-slate-500 text-xs">
                     لا توجد سجلات مطابقة لمعايير البحث
                   </td>
                 </tr>
@@ -323,45 +321,6 @@ export const AttendanceTableTab: React.FC<AttendanceTableTabProps> = ({
                         >
                           {getParticipationBadge(record.oralParticipation, 'oral')}
                         </button>
-                      </td>
-
-                      {/* Note */}
-                      <td className="py-3 px-4">
-                        {editingNoteId === record.id ? (
-                          <div className="flex items-center gap-1.5">
-                            <input
-                              type="text"
-                              autoFocus
-                              value={tempNote}
-                              onChange={(e) => setTempNote(e.target.value)}
-                              placeholder="أدخل الملاحظة..."
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveNote(record.id);
-                                if (e.key === 'Escape') setEditingNoteId(null);
-                              }}
-                              className="w-full px-2.5 py-1 bg-slate-950 border border-emerald-500 rounded-lg text-xs text-slate-100 focus:outline-none"
-                            />
-                            <button
-                              onClick={() => handleSaveNote(record.id)}
-                              className="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold"
-                            >
-                              حفظ
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setEditingNoteId(record.id);
-                              setTempNote(record.notes || '');
-                            }}
-                            className="w-full text-right flex items-center justify-between gap-1.5 p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors group"
-                          >
-                            <span className="truncate text-[11px] text-slate-300">
-                              {record.notes || <span className="text-slate-600 font-normal italic">إضافة ملاحظة...</span>}
-                            </span>
-                            <Edit3 className="w-3 h-3 text-slate-500 group-hover:text-emerald-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </button>
-                        )}
                       </td>
 
                     </tr>

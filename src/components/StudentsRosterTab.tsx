@@ -14,6 +14,7 @@ import {
   BookOpen, 
   Phone, 
   Mail,
+  FileText,
   Sparkles
 } from 'lucide-react';
 import { Student } from '../types';
@@ -25,6 +26,8 @@ interface StudentsRosterTabProps {
   onUpdateStudent: (student: Student) => void;
   onDeleteStudent: (studentId: string) => void;
   onImportStudents: (newStudents: Student[]) => void;
+  onOpenReportModal?: () => void;
+  onExportExcel?: () => void;
 }
 
 export const StudentsRosterTab: React.FC<StudentsRosterTabProps> = ({
@@ -32,7 +35,9 @@ export const StudentsRosterTab: React.FC<StudentsRosterTabProps> = ({
   onAddStudent,
   onUpdateStudent,
   onDeleteStudent,
-  onImportStudents
+  onImportStudents,
+  onOpenReportModal,
+  onExportExcel
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('ALL');
@@ -176,6 +181,29 @@ export const StudentsRosterTab: React.FC<StudentsRosterTabProps> = ({
 
         <div className="flex flex-wrap items-center gap-2">
           
+          {/* Monthly Export & PDF Report Buttons */}
+          {onOpenReportModal && (
+            <button
+              onClick={onOpenReportModal}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-rose-300 text-xs font-semibold transition-colors"
+              title="تقرير شهري (PDF)"
+            >
+              <FileText className="w-4 h-4 text-rose-400" />
+              <span>تقرير شهري (PDF)</span>
+            </button>
+          )}
+
+          {onExportExcel && (
+            <button
+              onClick={onExportExcel}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-300 text-xs font-semibold transition-colors"
+              title="تصدير شهري وشامل (Excel)"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+              <span>تصدير شهري (Excel)</span>
+            </button>
+          )}
+
           <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-medium cursor-pointer transition-colors">
             <Upload className="w-4 h-4 text-emerald-400" />
             <span>استيراد Excel</span>
@@ -189,14 +217,6 @@ export const StudentsRosterTab: React.FC<StudentsRosterTabProps> = ({
           >
             <Download className="w-4 h-4 text-sky-400" />
             <span>قالب Excel</span>
-          </button>
-
-          <button
-            onClick={() => exportStudentsToExcel(students)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-medium transition-colors"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-            <span>تصدير</span>
           </button>
 
           <button
@@ -333,9 +353,12 @@ export const StudentsRosterTab: React.FC<StudentsRosterTabProps> = ({
                   <input
                     type="text"
                     required
+                    maxLength={5}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={formId}
-                    onChange={(e) => setFormId(e.target.value)}
-                    placeholder="871"
+                    onChange={(e) => setFormId(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                    placeholder="00871"
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100 font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>

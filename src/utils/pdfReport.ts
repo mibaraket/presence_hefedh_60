@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { saveAs } from 'file-saver';
 import { Student, Session, AttendanceRecord, MonthlyReportData } from '../types';
 
 export function computeMonthlyStats(
@@ -104,14 +105,17 @@ export async function generateMonthlyAttendancePDF(
   container.setAttribute('dir', 'rtl');
   container.style.position = 'fixed';
   container.style.top = '0';
-  container.style.left = '-9999px';
-  container.style.width = '800px';
+  container.style.left = '0';
+  container.style.width = '850px';
   container.style.backgroundColor = '#ffffff';
   container.style.color = '#0f172a';
-  container.style.fontFamily = "system-ui, -apple-system, 'Segoe UI', 'Tajawal', 'Cairo', Arial, sans-serif";
+  container.style.fontFamily = "'Cairo', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif";
   container.style.padding = '32px';
   container.style.boxSizing = 'border-box';
-  container.style.zIndex = '-9999';
+  container.style.zIndex = '99999';
+  container.style.opacity = '1';
+  container.style.visibility = 'visible';
+  container.style.pointerEvents = 'none';
 
   // Build high-definition HTML Template
   container.innerHTML = `
@@ -255,10 +259,11 @@ export async function generateMonthlyAttendancePDF(
       scale: 2,
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      windowWidth: 1000
     });
 
-    const imgData = canvas.toDataURL('image/png');
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -272,21 +277,159 @@ export async function generateMonthlyAttendancePDF(
     let heightLeft = imgHeight;
     let position = 0;
 
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
     heightLeft -= pageHeight;
 
     while (heightLeft > 0) {
       position = heightLeft - imgHeight;
       pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
       heightLeft -= pageHeight;
     }
 
-    const safeFileName = `تقرير_مواظبة_${reportData.monthName.split(' ')[0]}_${reportData.year}.pdf`;
-    pdf.save(safeFileName);
+    const safeMonth = (reportData.monthName || 'شهري').replace(/\s+/g, '_');
+    const safeFileName = `تقرير_مواظبة_${safeMonth}_${reportData.year}.pdf`;
+    
+    // Robust blob download
+    const blob = pdf.output('blob');
+    saveAs(blob, safeFileName);
+  } catch (canvasErr) {
+    console.error('Canvas capture failed, falling back to direct jsPDF generation:', canvasErr);
+    // Reliable fallback text/tabular PDF
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    pdf.setFontSize(16);
+    pdf.text(institutionName, 105, 20, { align: 'center' });
+    pdf.setFontSize(12);
+    pdf.text(`Rapport Mensuel / تقرير الحضور - ${reportData.monthName} ${reportData.year}`, 105, 30, { align: 'center' });
+    pdf.setFontSize(10);
+    pdf.text(`Sessions: ${reportData.totalSessions} | Taux General: ${reportData.overallAttendanceRate}%`, 105, 40, { align: 'center' });
+    pdf.text(`Recitations: ${reportData.totalRecitations} | Repetitions: ${reportData.totalOralParticipations}`, 105, 46, { align: 'center' });
+
+    let y = 60;
+    pdf.text('ID    Nom & Prenom                        Pres.   Abs.    Taux    Tilawa', 15, y);
+    y += 4;
+    pdf.line(15, y, 195, y);
+    y += 6;
+
+    reportData.studentStats.forEach((st) => {
+      if (y > 275) {
+        pdf.addPage();
+        y = 20;
+      }
+      const line = `${st.studentId.padEnd(5)} ${st.studentName.padEnd(30)} ${String(st.presentCount).padStart(3)}     ${String(st.absentCount).padStart(3)}     ${st.monthlyRate}%     ${st.recitationCount > 0 ? 'Oui' : '-'}`;
+      pdf.text(line, 15, y);
+      y += 7;
+    });
+
+    const safeMonth = (reportData.monthName || 'شهري').replace(/\s+/g, '_');
+    const safeFileName = `تقرير_مواظبة_${safeMonth}_${reportData.year}.pdf`;
+    const blob = pdf.output('blob');
+    saveAs(blob, safeFileName);
   } finally {
     if (document.body.contains(container)) {
       document.body.removeChild(container);
     }
   }
+}
+
+/**
+ * Native Browser Print / Save as PDF Fallback
+ */
+export function printMonthlyAttendanceReport(
+  reportData: MonthlyReportData,
+  institutionName = 'مجموعة حفظ الستين • مدرسة القرآن الكريم'
+): void {
+  const printIframe = document.createElement('iframe');
+  printIframe.style.position = 'fixed';
+  printIframe.style.right = '0';
+  printIframe.style.bottom = '0';
+  printIframe.style.width = '0';
+  printIframe.style.height = '0';
+  printIframe.style.border = 'none';
+
+  document.body.appendChild(printIframe);
+
+  const doc = printIframe.contentWindow?.document;
+  if (!doc) return;
+
+  const now = new Date();
+  const generationDateStr = now.toLocaleDateString('ar-EG', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="utf-8">
+      <title>تقرير مواظبة - ${reportData.monthName} ${reportData.year}</title>
+      <style>
+        @page { size: A4; margin: 15mm; }
+        body { font-family: system-ui, -apple-system, sans-serif; direction: rtl; text-align: right; color: #0f172a; margin: 0; padding: 10px; }
+        .header { background: #064e3b; color: white; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+        .kpis { display: flex; gap: 10px; margin-bottom: 20px; }
+        .kpi { flex: 1; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: center; }
+        th { background: #0f172a; color: white; }
+        .signatures { display: flex; justify-content: space-between; margin-top: 30px; gap: 20px; }
+        .sig-box { flex: 1; border: 1px solid #cbd5e1; padding: 12px; height: 70px; border-radius: 6px; }
+      </style>
+    </head>
+    <body>
+      <div style="text-align: center; font-weight: bold; margin-bottom: 10px; color: #065f46;">بِسْمِ اللَّـهِ الرَّحْمَـٰنِ الرَّحِيمِ</div>
+      <div class="header">
+        <h2 style="margin: 0 0 5px 0;">${institutionName}</h2>
+        <div style="font-size: 13px;">التقرير الإحصائي الشهري للحضور والتسميع القرآني - ${reportData.monthName} ${reportData.year}</div>
+        <div style="font-size: 11px; opacity: 0.9; margin-top: 4px;">تاريخ الاستخراج: ${generationDateStr}</div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div>نسبة الحضور</div><strong style="font-size: 18px; color: #15803d;">${reportData.overallAttendanceRate}%</strong></div>
+        <div class="kpi"><div>حصص الشهر</div><strong style="font-size: 18px;">${reportData.totalSessions}</strong></div>
+        <div class="kpi"><div>جلسات التسميع</div><strong style="font-size: 18px; color: #065f46;">${reportData.totalRecitations}</strong></div>
+        <div class="kpi"><div>جلسات التكرار</div><strong style="font-size: 18px; color: #0f766e;">${reportData.totalOralParticipations}</strong></div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>المعرف</th><th>اسم ولقب الطالب</th><th>الفوج</th><th>حاضر</th><th>غائب</th><th>النسبة</th><th>تلاوة</th><th>تكرار</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${reportData.studentStats.map((st) => `
+            <tr>
+              <td>${st.studentId}</td>
+              <td style="text-align: right; font-weight: bold;">${st.studentName}</td>
+              <td>${st.group || '—'}</td>
+              <td style="color: #15803d; font-weight: bold;">${st.presentCount}</td>
+              <td style="color: #dc2626;">${st.absentCount}</td>
+              <td style="font-weight: bold;">${st.monthlyRate}%</td>
+              <td>${st.recitationCount}</td>
+              <td>${st.oralCount}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div class="signatures">
+        <div class="sig-box">توقيع شيخ الحلقة / المشرف التربوي:</div>
+        <div class="sig-box">ختم إدارة المدرسة القرآنية:</div>
+      </div>
+    </body>
+    </html>
+  `);
+  doc.close();
+
+  setTimeout(() => {
+    printIframe.contentWindow?.focus();
+    printIframe.contentWindow?.print();
+    setTimeout(() => {
+      if (document.body.contains(printIframe)) {
+        document.body.removeChild(printIframe);
+      }
+    }, 2000);
+  }, 500);
 }

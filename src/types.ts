@@ -15,6 +15,8 @@ export interface Student {
   phone?: string;
   avatarColor?: string;
   hizbProgress?: string; // مستوى الحفظ الحالي
+  branchId?: string; // الفرع / الملحقة
+  branchName?: string;
 }
 
 export interface Session {
@@ -25,6 +27,9 @@ export interface Session {
   endTime: string; // HH:mm
   room?: string; // مثال: "القاعة الكبرى - جامع الفرقان"
   teacher?: string; // المشرف / الشيخ
+  branchId?: string;
+  branchName?: string;
+  group?: string;
   isClosed?: boolean; // هل تم اختتام الحصة وتثبيتها
 }
 
@@ -120,7 +125,23 @@ export interface MonthlyReportData {
   }[];
 }
 
-export type UserRole = 'ADMIN' | 'TEACHER';
+export type UserRole = 'ADMIN' | 'BRANCH_ADMIN' | 'TEACHER';
+
+export interface Branch {
+  id: string;
+  name: string;
+  location?: string;
+  phone?: string;
+  createdAt?: string;
+}
+
+export interface TeacherEntity {
+  id: string;
+  name: string;
+  phone?: string;
+  branchId?: string;
+  branchName?: string;
+}
 
 export interface AppUser {
   id: string;
@@ -129,6 +150,8 @@ export interface AppUser {
   role: UserRole;
   roleLabel: string;
   avatarColor?: string;
+  branchId?: string; // فرع / فيليال
+  branchName?: string;
 }
 
 /**

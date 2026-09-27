@@ -191,8 +191,7 @@ export function exportAttendanceToExcel(
       'وقت تسجيل الحضور': rec.entryTimestamp || 'لم يتم التسجيل بعد',
       'نسبة الحضور التراكمية': `${rec.attendanceRate}%`,
       'التلاوة': getParticipationLabel(rec.recitation, 'recitation'),
-      'تكرار': getParticipationLabel(rec.oralParticipation, 'oral'),
-      'ملاحظة': rec.notes || ''
+      'تكرار': getParticipationLabel(rec.oralParticipation, 'oral')
     };
   });
 
@@ -210,7 +209,6 @@ export function exportAttendanceToExcel(
     { wch: 22 },
     { wch: 24 },
     { wch: 26 },
-    { wch: 30 },
   ];
   XLSX.utils.book_append_sheet(workbook, wsDetails, 'سجل_الحضور_والتلاوة');
 

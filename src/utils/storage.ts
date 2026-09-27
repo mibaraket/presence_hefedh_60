@@ -6,7 +6,9 @@ import {
   ExamRecord,
   ExamEntity,
   ParticipationStatus,
-  normalizeParticipation 
+  normalizeParticipation,
+  Branch,
+  TeacherEntity
 } from '../types';
 import { 
   syncStudentsToSupabase, 
@@ -22,8 +24,100 @@ const STORAGE_KEYS = {
   EXAMS: 'quran_sixtieth_exams_v5',
   EXAM_DEFINITIONS: 'quran_sixtieth_exam_definitions_v5',
   ACTIVE_SESSION_ID: 'quran_sixtieth_active_session_id_v5',
-  INSTITUTION_NAME: 'quran_sixtieth_institution_v5'
+  INSTITUTION_NAME: 'quran_sixtieth_institution_v5',
+  BRANCHES: 'quran_sixtieth_branches_v1',
+  TEACHERS: 'quran_sixtieth_teachers_v1'
 };
+
+export const DEFAULT_BRANCHES: Branch[] = [
+  {
+    id: 'branch-1',
+    name: 'الفرع الرئيسي - العاصمة',
+    location: 'المقر المركزي - جامع الإمام نافع',
+    phone: '71 000 001',
+    createdAt: '2025-01-01'
+  },
+  {
+    id: 'branch-2',
+    name: 'فرع الهدى والفرقان',
+    location: 'قاعة الفرقان - حي الأندلس',
+    phone: '71 000 002',
+    createdAt: '2025-01-01'
+  },
+  {
+    id: 'branch-3',
+    name: 'فرع النور المبين',
+    location: 'قاعة الإمام مالك',
+    phone: '71 000 003',
+    createdAt: '2025-01-01'
+  }
+];
+
+export const DEFAULT_TEACHERS: TeacherEntity[] = [
+  {
+    id: 'teacher-1',
+    name: 'الشيخ مراد الجدلي',
+    phone: '98 123 456',
+    branchId: 'branch-1',
+    branchName: 'الفرع الرئيسي - العاصمة'
+  },
+  {
+    id: 'teacher-2',
+    name: 'الشيخ أحمد بركات',
+    phone: '97 654 321',
+    branchId: 'branch-2',
+    branchName: 'فرع الهدى والفرقان'
+  },
+  {
+    id: 'teacher-3',
+    name: 'الشيخ البشير الإبراهيمي',
+    phone: '99 888 777',
+    branchId: 'branch-3',
+    branchName: 'فرع النور المبين'
+  }
+];
+
+export function loadStoredBranches(): Branch[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.BRANCHES);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (err) {
+    console.error('Error loading branches', err);
+  }
+  return DEFAULT_BRANCHES;
+}
+
+export function saveStoredBranches(branches: Branch[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.BRANCHES, JSON.stringify(branches));
+  } catch (err) {
+    console.error('Error saving branches', err);
+  }
+}
+
+export function loadStoredTeachers(): TeacherEntity[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.TEACHERS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (err) {
+    console.error('Error loading teachers', err);
+  }
+  return DEFAULT_TEACHERS;
+}
+
+export function saveStoredTeachers(teachers: TeacherEntity[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.TEACHERS, JSON.stringify(teachers));
+  } catch (err) {
+    console.error('Error saving teachers', err);
+  }
+}
 
 export const DEFAULT_STUDENTS: Student[] = [
   { id: '81', firstName: 'حلمي', lastName: 'بوعيانة', group: 'فوج حفظ الستين', hizbProgress: 'قيد التثبيت', avatarColor: 'bg-emerald-600' },

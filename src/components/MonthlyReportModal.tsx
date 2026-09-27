@@ -12,7 +12,7 @@ import {
   Printer
 } from 'lucide-react';
 import { Student, Session, AttendanceRecord } from '../types';
-import { computeMonthlyStats, generateMonthlyAttendancePDF } from '../utils/pdfReport';
+import { computeMonthlyStats, generateMonthlyAttendancePDF, printMonthlyAttendanceReport } from '../utils/pdfReport';
 
 interface MonthlyReportModalProps {
   isOpen: boolean;
@@ -54,19 +54,24 @@ export const MonthlyReportModal: React.FC<MonthlyReportModalProps> = ({
     { value: 11, label: 'ديسمبر / ذو الحجة' }
   ];
 
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   const reportData = useMemo(() => {
     return computeMonthlyStats(selectedMonth, selectedYear, students, sessions, records);
   }, [selectedMonth, selectedYear, students, sessions, records]);
 
   const handleDownloadPDF = async () => {
     setIsGenerating(true);
+    setStatusMessage(null);
     try {
       if (institution !== institutionName) {
         onUpdateInstitutionName(institution);
       }
       await generateMonthlyAttendancePDF(reportData, institution || 'مجموعة حفظ الستين - مدرسة التحفيظ');
-    } catch (err) {
+      setStatusMessage({ type: 'success', text: 'تم استخراج وتحميل ملف PDF بنجاح!' });
+    } catch (err: any) {
       console.error('Error generating PDF:', err);
+      setStatusMessage({ type: 'error', text: 'تعذر استخراج ملف PDF مباشرة، يمكنك استخدام زر "معاينة وطباعة" لحفظه كـ PDF.' });
     } finally {
       setIsGenerating(false);
     }
@@ -102,6 +107,21 @@ export const MonthlyReportModal: React.FC<MonthlyReportModalProps> = ({
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-5 flex-1">
           
+          {statusMessage && (
+            <div className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2 ${
+              statusMessage.type === 'success' 
+                ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300' 
+                : 'bg-rose-950/60 border-rose-500/40 text-rose-300'
+            }`}>
+              {statusMessage.type === 'success' ? (
+                <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+              )}
+              <span>{statusMessage.text}</span>
+            </div>
+          )}
+
           {/* Controls Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
             <div>
@@ -204,28 +224,39 @@ export const MonthlyReportModal: React.FC<MonthlyReportModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex items-center justify-between">
+        <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex flex-wrap items-center justify-between gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-medium text-xs transition-colors"
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-medium text-xs transition-colors cursor-pointer"
           >
             إغلاق
           </button>
 
-          <button
-            onClick={handleDownloadPDF}
-            disabled={isGenerating}
-            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg shadow-emerald-950/40 transition-all disabled:opacity-50"
-          >
-            {isGenerating ? (
-              <span>جاري توليد ملف PDF...</span>
-            ) : (
-              <>
-                <Download className="w-4 h-4" />
-                <span>تحميل واستخراج التقرير الرسمي (PDF)</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => printMonthlyAttendanceReport(reportData, institution || 'مجموعة حفظ الستين - مدرسة التحفيظ')}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 rounded-xl font-bold text-xs border border-slate-700 transition-all cursor-pointer"
+              title="طباعة التقرير مباشرة أو حفظه بصيغة PDF عبر المتصفح"
+            >
+              <Printer className="w-4 h-4 text-emerald-400" />
+              <span>معاينة وطباعة (Print)</span>
+            </button>
+
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isGenerating}
+              className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg shadow-emerald-950/40 transition-all disabled:opacity-50 cursor-pointer"
+            >
+              {isGenerating ? (
+                <span>جاري توليد ملف PDF...</span>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  <span>تحميل ملف PDF</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
       </div>
