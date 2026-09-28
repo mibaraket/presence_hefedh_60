@@ -359,50 +359,6 @@ export const Header: React.FC<HeaderProps> = ({
 
         </div>
       </div>
-
-      {/* Navigation Tabs Bar (Desktop view) */}
-      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 border-t border-slate-800/80">
-        <nav className="flex space-x-reverse space-x-1 sm:space-x-2 py-1.5 overflow-x-auto scrollbar-none">
-          <button
-            onClick={() => handleTabSwitch('checkin')}
-            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-              isTabActive('checkin')
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/50 ring-1 ring-emerald-400/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-            }`}
-          >
-            <UserCheck className="w-4 h-4" />
-            <span>تسجيل الحضور</span>
-          </button>
-
-          <button
-            onClick={() => handleTabSwitch('recitation_queue')}
-            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-              isTabActive('recitation_queue')
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/50 ring-1 ring-emerald-400/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            <span>قوائم وتناوب (تلاوة وتكرار)</span>
-          </button>
-
-          {/* 3rd Tab: Only for ADMIN and BRANCH_ADMIN, hidden for TEACHER */}
-          {currentUser?.role !== 'TEACHER' && (
-            <button
-              onClick={() => handleTabSwitch('students')}
-              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                isTabActive('students')
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/50 ring-1 ring-emerald-400/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              <span>قائمة الحفاظ والطلاب</span>
-            </button>
-          )}
-        </nav>
-      </div>
     </header>
   );
 };

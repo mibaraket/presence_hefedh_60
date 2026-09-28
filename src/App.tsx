@@ -697,7 +697,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-4 pb-20 sm:pb-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-4 pb-24 sm:pb-28">
         
         {/* Tab 1: تسجيل الحضور الفوري بالمعرف الوحيد */}
         {activeTab === 'checkin' && (
@@ -751,7 +751,7 @@ export default function App() {
       </main>
 
       {/* Discrete Status Bar Footer (Desktop view) */}
-      <footer className="hidden sm:flex bg-slate-900/90 border-t border-slate-800 px-6 py-2.5 shrink-0 justify-between items-center text-xs text-slate-400">
+      <footer className="hidden sm:flex bg-slate-900/90 border-t border-slate-800 px-6 py-2.5 shrink-0 justify-between items-center text-xs text-slate-400 mb-16">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 animate-pulse"></span>
           <p className="text-slate-300 font-medium text-[11px]">

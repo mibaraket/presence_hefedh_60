@@ -376,11 +376,11 @@ export const CheckInTab: React.FC<CheckInTabProps> = ({
           <table className="w-full text-right text-xs border-collapse">
             <thead>
               <tr className="bg-slate-950/90 border-b border-slate-800 text-slate-400 font-bold text-[11px]">
-                <th className="py-2 px-2.5 w-10 text-center">#</th>
-                <th className="py-2 px-3 min-w-[160px]">الطالب والمعرف</th>
-                <th className="py-2 px-2.5 min-w-[130px] text-center">الحضور</th>
-                <th className="py-2 px-2.5 min-w-[100px] text-center">التلاوة</th>
-                <th className="py-2 px-2.5 min-w-[100px] text-center">تكرار</th>
+                <th className="py-2.5 px-3 text-center min-w-[90px] w-28">المعرف الوحيد (ID)</th>
+                <th className="py-2.5 px-3 min-w-[150px]">اسم ولقب الطالب</th>
+                <th className="py-2.5 px-2.5 min-w-[130px] text-center">الحضور</th>
+                <th className="py-2.5 px-2.5 min-w-[100px] text-center">التلاوة</th>
+                <th className="py-2.5 px-2.5 min-w-[100px] text-center">تكرار</th>
               </tr>
             </thead>
 
@@ -392,7 +392,7 @@ export const CheckInTab: React.FC<CheckInTabProps> = ({
                   </td>
                 </tr>
               ) : (
-                filteredRows.map(({ student, record }, idx) => {
+                filteredRows.map(({ student, record }) => {
                   const recordId = record?.id || `${activeSession?.id}_${student.id}`;
                   const currentStatus = record?.status || 'ABSENT';
                   const isPresent = currentStatus === 'PRESENT';
@@ -407,27 +407,17 @@ export const CheckInTab: React.FC<CheckInTabProps> = ({
                         isPresent ? 'bg-emerald-950/15' : 'bg-transparent'
                       }`}
                     >
-                      {/* Index */}
-                      <td className="py-2 px-2 text-center text-slate-500 font-mono text-[10px]">
-                        {idx + 1}
+                      {/* Unique ID as First Column */}
+                      <td className="py-2.5 px-3 text-center">
+                        <span className="inline-block text-xs text-emerald-400 font-mono font-bold bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-500/30">
+                          #{student.id}
+                        </span>
                       </td>
 
-                      {/* Student Info */}
-                      <td className="py-2 px-3">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-7 h-7 rounded-lg ${student.avatarColor || 'bg-emerald-600'} text-white flex items-center justify-center font-bold text-[11px] shrink-0`}>
-                            {student.lastName.charAt(0)}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="font-bold text-slate-100 text-xs truncate">
-                              {student.lastName} {student.firstName}
-                            </div>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-950/70 px-1 py-0.2 rounded border border-emerald-500/25">
-                                #{student.id}
-                              </span>
-                            </div>
-                          </div>
+                      {/* Student Name */}
+                      <td className="py-2.5 px-3">
+                        <div className="font-bold text-slate-100 text-xs sm:text-sm truncate">
+                          {student.lastName} {student.firstName}
                         </div>
                       </td>
 

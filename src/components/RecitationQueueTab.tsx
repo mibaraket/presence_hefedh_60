@@ -561,25 +561,17 @@ export const RecitationQueueTab: React.FC<RecitationQueueTabProps> = ({
           
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-sm">
-                <Hash className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-sm">
+                <Hash className="w-4 h-4" />
               </div>
-              <div>
-                <h3 className="text-base font-black text-slate-100 flex items-center gap-2">
-                  <span>قائمة التلاوة الفردية</span>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
-                    مرتبة تصاعدياً بالمعرف الوحيد (ID)
-                  </span>
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  أولوية التناوب للطلاب الحاضرين الذين لم يسمّعوا في الحصة السابقة ثم حسب تسلسل المعرف الوحيد
-                </p>
-              </div>
+              <h3 className="text-base font-black text-slate-100">
+                قائمة التلاوة الفردية
+              </h3>
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-500/30">
-                المتبقي: {recitationQueue.length} طالب
+              <div className="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-500/30 font-mono">
+                المتبقي: {recitationQueue.length}
               </div>
               <button
                 type="button"
@@ -588,71 +580,82 @@ export const RecitationQueueTab: React.FC<RecitationQueueTabProps> = ({
                 title="إعادة البدء من الأول وبدء دورة تلاوة جديدة"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-emerald-400" />
-                <span>إعادة البدء من الأول</span>
+                <span>إعادة البدء</span>
               </button>
             </div>
           </div>
 
-          <div className="space-y-2">
-            {recitationQueue.length === 0 ? (
-              <div className="py-16 text-center text-slate-400 text-xs bg-slate-950/50 rounded-2xl border border-slate-800 p-6 space-y-3">
-                <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
-                <h4 className="font-bold text-slate-200 text-sm">لا يوجد طلاب متبقين في قائمة التلاوة لهذا اليوم</h4>
-                <p className="text-slate-400 text-xs">تم تسجيل دور جميع الحاضرين بنجاح. يمكنك إعادة تشغيل الدورة من الأول في أي وقت.</p>
-                <button
-                  type="button"
-                  onClick={handleRestartRecitation}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition-all cursor-pointer"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  <span>بدء دورة تلاوة جديدة من الأول</span>
-                </button>
+          {recitationQueue.length === 0 ? (
+            <div className="py-16 text-center text-slate-400 text-xs bg-slate-950/50 rounded-2xl border border-slate-800 p-6 space-y-3">
+              <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
+              <h4 className="font-bold text-slate-200 text-sm">لا يوجد طلاب متبقين في قائمة التلاوة لهذا اليوم</h4>
+              <p className="text-slate-400 text-xs">تم تسجيل دور جميع الحاضرين بنجاح.</p>
+              <button
+                type="button"
+                onClick={handleRestartRecitation}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition-all cursor-pointer"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>بدء دورة تلاوة جديدة من الأول</span>
+              </button>
+            </div>
+          ) : (
+            <div className="bg-slate-950/80 border border-slate-800 rounded-xl overflow-hidden shadow-inner">
+              <div className="overflow-x-auto scrollbar-thin">
+                <table className="w-full text-right text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 font-bold text-[11px]">
+                      <th className="py-2.5 px-3 text-center min-w-[90px] w-28">المعرف الوحيد</th>
+                      <th className="py-2.5 px-4 min-w-[170px]">اسم ولقب الطالب</th>
+                      <th className="py-2.5 px-3 min-w-[130px]">الفوج / الحلقة</th>
+                      <th className="py-2.5 px-4 text-center min-w-[130px] w-36">إجراء التلاوة</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {recitationQueue.map((item) => {
+                      const isSelected = item.recitationStatus === 'SELECTED';
+                      return (
+                        <tr
+                          key={item.student.id}
+                          className={`transition-colors ${
+                            isSelected 
+                              ? 'bg-amber-950/35 ring-1 ring-amber-400/40 text-amber-200' 
+                              : 'hover:bg-slate-800/40'
+                          }`}
+                        >
+                          <td className="py-2.5 px-3 text-center">
+                            <span className="inline-block font-mono font-bold text-xs text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-500/30">
+                              #{item.student.id}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-4 font-bold text-slate-100 text-xs sm:text-sm">
+                            {item.student.lastName} {item.student.firstName}
+                          </td>
+                          <td className="py-2.5 px-3 text-slate-300 text-xs">
+                            {item.student.group || 'فوج الستين'}
+                          </td>
+                          <td className="py-2.5 px-4 text-center">
+                            <button
+                              type="button"
+                              onClick={() => onCycleRecitation(item.recordId)}
+                              className={`w-full py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 ${
+                                isSelected
+                                  ? 'bg-amber-500 text-slate-950 ring-2 ring-amber-300 animate-pulse font-black'
+                                  : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                              }`}
+                            >
+                              <BookOpen className="w-3.5 h-3.5" />
+                              <span>{isSelected ? 'تأكيد التلاوة ✓' : 'تسجيل تلاوة'}</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            ) : (
-              recitationQueue.map((item, idx) => {
-                const isSelected = item.recitationStatus === 'SELECTED';
-                return (
-                  <div
-                    key={item.student.id}
-                    className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 ${
-                      isSelected 
-                        ? 'bg-amber-950/30 border-amber-500/50 shadow-md ring-1 ring-amber-400/40' 
-                        : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-emerald-950 text-emerald-300 border border-emerald-500/30 flex items-center justify-center font-bold text-xs font-mono shrink-0">
-                        {idx + 1}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-bold text-slate-100 text-xs truncate">
-                          {item.student.lastName} {item.student.firstName}
-                        </div>
-                        <div className="text-[10px] text-emerald-400 font-mono font-bold mt-0.5">
-                          المعرف الوحيد: #{item.student.id} • {item.student.group || 'فوج الستين'}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => onCycleRecitation(item.recordId)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                          isSelected
-                            ? 'bg-amber-500 text-slate-950 ring-2 ring-amber-300 animate-pulse'
-                            : 'bg-slate-800 hover:bg-emerald-600 hover:text-white border border-slate-700 text-emerald-300'
-                        }`}
-                      >
-                        <BookOpen className="w-3.5 h-3.5" />
-                        <span>{isSelected ? 'تأكيد التلاوة ✓' : 'تسجيل تلاوة'}</span>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+            </div>
+          )}
 
         </div>
       )}
@@ -663,17 +666,12 @@ export const RecitationQueueTab: React.FC<RecitationQueueTabProps> = ({
           
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-teal-500/20 text-teal-400 border border-teal-500/30 flex items-center justify-center font-bold text-sm">
-                <Dices className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl bg-teal-500/20 text-teal-400 border border-teal-500/30 flex items-center justify-center font-bold text-sm">
+                <Dices className="w-4 h-4" />
               </div>
-              <div>
-                <h3 className="text-base font-black text-slate-100 flex items-center gap-2">
-                  <span>قائمة التكرار</span>
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  للطلاب الحاضرين الذين لم يشاركوا في تلاوة اليوم ولم يسبق لهم التكرار
-                </p>
-              </div>
+              <h3 className="text-base font-black text-slate-100">
+                قائمة التكرار
+              </h3>
             </div>
 
             <div className="flex items-center gap-2">
@@ -685,7 +683,7 @@ export const RecitationQueueTab: React.FC<RecitationQueueTabProps> = ({
                   className="px-4 py-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   <Dices className={`w-4 h-4 ${isRolling ? 'animate-spin' : ''}`} />
-                  <span>توليد القائمة الآن ({eligibleRepetitionCandidates.length || studentDataList.length} مرشح)</span>
+                  <span>توليد القائمة ({eligibleRepetitionCandidates.length || studentDataList.length} مرشح)</span>
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
@@ -696,7 +694,7 @@ export const RecitationQueueTab: React.FC<RecitationQueueTabProps> = ({
                     className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-teal-300 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <Shuffle className={`w-3.5 h-3.5 ${isRolling ? 'animate-spin' : ''}`} />
-                    <span>إعادة خلط القرعة العشوائية</span>
+                    <span>إعادة خلط</span>
                   </button>
                   <button
                     type="button"
@@ -705,7 +703,7 @@ export const RecitationQueueTab: React.FC<RecitationQueueTabProps> = ({
                     title="إعادة تعيين القائمة والبدء من جديد"
                   >
                     <RotateCcw className="w-3.5 h-3.5 text-teal-400" />
-                    <span>إعادة القرعة من الأول</span>
+                    <span>إعادة القرعة</span>
                   </button>
                 </div>
               )}
@@ -719,7 +717,7 @@ export const RecitationQueueTab: React.FC<RecitationQueueTabProps> = ({
                 القائمة جاهزة للتوليد
               </div>
               <p className="text-xs text-slate-400 max-w-md mx-auto">
-                يوجد حالياً {eligibleRepetitionCandidates.length} مرشحاً مؤهلاً مستوفين للشروط (حاضرون، لم يشاركوا في تلاوة اليوم، ولم يسبق لهم التكرار).
+                يوجد حالياً {eligibleRepetitionCandidates.length} مرشحاً مؤهلاً مستوفين للشروط.
               </p>
               <button
                 type="button"
@@ -730,7 +728,7 @@ export const RecitationQueueTab: React.FC<RecitationQueueTabProps> = ({
               </button>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div>
               {repetitionQueue.length === 0 ? (
                 <div className="py-16 text-center text-slate-400 text-xs bg-slate-950/50 rounded-2xl border border-slate-800 p-6 space-y-3">
                   <Award className="w-10 h-10 text-teal-400 mx-auto" />
@@ -742,52 +740,65 @@ export const RecitationQueueTab: React.FC<RecitationQueueTabProps> = ({
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-lg transition-all cursor-pointer"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    <span>بدء سحب قرعة جديدة من البداية</span>
+                    <span>بدء سحب قرعة جديدة</span>
                   </button>
                 </div>
               ) : (
-                repetitionQueue.map((item, idx) => {
-                  const isSelected = item.oralStatus === 'SELECTED';
-                  return (
-                    <div
-                      key={item.student.id}
-                      className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 ${
-                        isSelected 
-                          ? 'bg-teal-950/30 border-teal-500/50 shadow-md ring-1 ring-teal-400/40' 
-                          : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-7 h-7 rounded-lg bg-teal-950 text-teal-300 border border-teal-500/30 flex items-center justify-center font-bold text-xs font-mono shrink-0">
-                          #{idx + 1}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-bold text-slate-100 text-xs truncate">
-                            {item.student.lastName} {item.student.firstName}
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                            المعرف الوحيد: #{item.student.id} • {item.student.group || 'فوج الستين'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => onCycleOral(item.recordId)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                            isSelected
-                              ? 'bg-teal-500 text-slate-950 ring-2 ring-teal-300 animate-pulse'
-                              : 'bg-slate-800 hover:bg-teal-600 hover:text-white border border-slate-700 text-teal-300'
-                          }`}
-                        >
-                          <Repeat className="w-3.5 h-3.5" />
-                          <span>{isSelected ? 'تأكيد التكرار ✓' : 'تسجيل التكرار'}</span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl overflow-hidden shadow-inner">
+                  <div className="overflow-x-auto scrollbar-thin">
+                    <table className="w-full text-right text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 font-bold text-[11px]">
+                          <th className="py-2.5 px-3 text-center min-w-[90px] w-28">المعرف الوحيد</th>
+                          <th className="py-2.5 px-4 min-w-[170px]">اسم ولقب الطالب</th>
+                          <th className="py-2.5 px-3 min-w-[130px]">الفوج / الحلقة</th>
+                          <th className="py-2.5 px-4 text-center min-w-[130px] w-36">إجراء التكرار</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {repetitionQueue.map((item) => {
+                          const isSelected = item.oralStatus === 'SELECTED';
+                          return (
+                            <tr
+                              key={item.student.id}
+                              className={`transition-colors ${
+                                isSelected 
+                                  ? 'bg-teal-950/35 ring-1 ring-teal-400/40 text-teal-200' 
+                                  : 'hover:bg-slate-800/40'
+                              }`}
+                            >
+                              <td className="py-2.5 px-3 text-center">
+                                <span className="inline-block font-mono font-bold text-xs text-teal-400 bg-teal-950/80 px-2 py-0.5 rounded-lg border border-teal-500/30">
+                                  #{item.student.id}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-4 font-bold text-slate-100 text-xs sm:text-sm">
+                                {item.student.lastName} {item.student.firstName}
+                              </td>
+                              <td className="py-2.5 px-3 text-slate-300 text-xs">
+                                {item.student.group || 'فوج الستين'}
+                              </td>
+                              <td className="py-2.5 px-4 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => onCycleOral(item.recordId)}
+                                  className={`w-full py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 ${
+                                    isSelected
+                                      ? 'bg-teal-400 text-slate-950 ring-2 ring-teal-200 animate-pulse font-black'
+                                      : 'bg-teal-600 hover:bg-teal-500 text-white'
+                                  }`}
+                                >
+                                  <Repeat className="w-3.5 h-3.5" />
+                                  <span>{isSelected ? 'تأكيد التكرار ✓' : 'تسجيل تكرار'}</span>
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               )}
             </div>
           )}
@@ -801,61 +812,69 @@ export const RecitationQueueTab: React.FC<RecitationQueueTabProps> = ({
           
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-sm">
-                <CheckCircle2 className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-sm">
+                <CheckCircle2 className="w-4 h-4" />
               </div>
-              <div>
-                <h3 className="text-base font-black text-slate-100">
-                  الطلاب الذين أنجزوا التلاوة أو التكرار في هذه الحصة
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  سجل الإنجاز المباشر للحلقة النشطة ({completedTodayList.length} طالب)
-                </p>
-              </div>
+              <h3 className="text-base font-black text-slate-100">
+                الطلاب المنجزون في هذه الحصة
+              </h3>
+            </div>
+            <div className="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-500/30 font-mono">
+              المجموع: {completedTodayList.length}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {completedTodayList.length === 0 ? (
-              <div className="col-span-full py-16 text-center text-slate-500 text-xs">
-                لم يتم إتمام أي تلاوة أو تكرار في هذه الحلقة بعد
+          {completedTodayList.length === 0 ? (
+            <div className="py-16 text-center text-slate-500 text-xs">
+              لم يتم إتمام أي تلاوة أو تكرار في هذه الحلقة بعد
+            </div>
+          ) : (
+            <div className="bg-slate-950/80 border border-slate-800 rounded-xl overflow-hidden shadow-inner">
+              <div className="overflow-x-auto scrollbar-thin">
+                <table className="w-full text-right text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 font-bold text-[11px]">
+                      <th className="py-2.5 px-3 text-center min-w-[90px] w-28">المعرف الوحيد</th>
+                      <th className="py-2.5 px-4 min-w-[170px]">اسم ولقب الطالب</th>
+                      <th className="py-2.5 px-3 min-w-[130px]">الفوج / الحلقة</th>
+                      <th className="py-2.5 px-4 text-center min-w-[130px]">حالة الإنجاز</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {completedTodayList.map((item) => (
+                      <tr key={item.student.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="py-2.5 px-3 text-center">
+                          <span className="inline-block font-mono font-bold text-xs text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-500/30">
+                            #{item.student.id}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-4 font-bold text-slate-100 text-xs sm:text-sm">
+                          {item.student.lastName} {item.student.firstName}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-300 text-xs">
+                          {item.student.group || 'فوج الستين'}
+                        </td>
+                        <td className="py-2.5 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {item.recitationStatus === 'CONFIRMED' && (
+                              <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
+                                تلاوة ✓
+                              </span>
+                            )}
+                            {item.oralStatus === 'CONFIRMED' && (
+                              <span className="px-2 py-0.5 rounded-lg bg-teal-500/20 text-teal-300 text-xs font-bold border border-teal-500/30">
+                                تكرار ✓
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ) : (
-              completedTodayList.map((item) => (
-                <div
-                  key={item.student.id}
-                  className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between gap-3 shadow-md"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs">
-                      <Check className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-100 text-xs">
-                        {item.student.lastName} {item.student.firstName}
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                        المعرف الوحيد: {item.student.id}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-end gap-1">
-                    {item.recitationStatus === 'CONFIRMED' && (
-                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
-                        تمت التلاوة ✓
-                      </span>
-                    )}
-                    {item.oralStatus === 'CONFIRMED' && (
-                      <span className="px-2 py-0.5 rounded-md bg-teal-500/20 text-teal-300 text-[10px] font-bold border border-teal-500/30">
-                        تم التكرار ✓
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+            </div>
+          )}
 
         </div>
       )}

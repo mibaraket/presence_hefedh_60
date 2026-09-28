@@ -11,3 +11,7 @@
   }
 }
 
+.pb-safe {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0.5rem));
+}
+

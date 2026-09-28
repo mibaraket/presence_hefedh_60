@@ -149,86 +149,111 @@ export const StudentsRosterTab: React.FC<StudentsRosterTabProps> = ({
   return (
     <div className="space-y-4">
       
-      {/* Control Bar */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        
-        <div className="flex flex-1 flex-wrap items-center gap-2.5">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="بحث في قائمة الحفاظ..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-3 pr-9 py-2 bg-slate-950/70 border border-slate-700/80 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-            />
-          </div>
+      {/* Export & Action Buttons Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
+        {/* 1. Monthly Report PDF */}
+        {onOpenReportModal && (
+          <button
+            type="button"
+            onClick={onOpenReportModal}
+            className="p-3 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-rose-500/50 flex flex-col items-center justify-center text-center gap-2 group transition-all cursor-pointer shadow-sm active:scale-98"
+          >
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center group-hover:bg-rose-500/20 group-hover:scale-105 transition-all">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-bold text-slate-100 text-xs group-hover:text-rose-300">تقرير شهري (PDF)</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">طباعة وإحصائيات الحضور</div>
+            </div>
+          </button>
+        )}
 
-          <div className="flex items-center gap-1.5">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
-            <select
-              value={selectedGroup}
-              onChange={(e) => setSelectedGroup(e.target.value)}
-              className="bg-slate-950/70 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium cursor-pointer"
-            >
-              <option value="ALL">كافة الأفواج ({students.length})</option>
-              {groups.map((grp) => (
-                <option key={grp} value={grp}>{grp}</option>
-              ))}
-            </select>
+        {/* 2. Monthly Excel Export */}
+        {onExportExcel && (
+          <button
+            type="button"
+            onClick={onExportExcel}
+            className="p-3 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 flex flex-col items-center justify-center text-center gap-2 group transition-all cursor-pointer shadow-sm active:scale-98"
+          >
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center group-hover:bg-emerald-500/20 group-hover:scale-105 transition-all">
+              <FileSpreadsheet className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-bold text-slate-100 text-xs group-hover:text-emerald-300">تصدير شهري (Excel)</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">جدول إكسيل تفصيلي شامل</div>
+            </div>
+          </button>
+        )}
+
+        {/* 3. Import Excel */}
+        <label className="p-3 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-teal-500/50 flex flex-col items-center justify-center text-center gap-2 group transition-all cursor-pointer shadow-sm active:scale-98">
+          <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-400 flex items-center justify-center group-hover:bg-teal-500/20 group-hover:scale-105 transition-all">
+            <Upload className="w-5 h-5" />
           </div>
+          <div>
+            <div className="font-bold text-slate-100 text-xs group-hover:text-teal-300">استيراد طلاب (Excel)</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">إدراج قوائم جماعية</div>
+          </div>
+          <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} className="hidden" />
+        </label>
+
+        {/* 4. Template Download */}
+        <button
+          type="button"
+          onClick={downloadStudentsTemplate}
+          className="p-3 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-sky-500/50 flex flex-col items-center justify-center text-center gap-2 group transition-all cursor-pointer shadow-sm active:scale-98"
+        >
+          <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400 flex items-center justify-center group-hover:bg-sky-500/20 group-hover:scale-105 transition-all">
+            <Download className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-bold text-slate-100 text-xs group-hover:text-sky-300">قالب Excel فارغ</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">نموذج تعبئة للطلاب</div>
+          </div>
+        </button>
+
+        {/* 5. Add New Student */}
+        <button
+          type="button"
+          onClick={openAddModal}
+          className="p-3 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 border border-emerald-500/40 text-white flex flex-col items-center justify-center text-center gap-2 group transition-all cursor-pointer shadow-lg shadow-emerald-950/50 active:scale-98"
+        >
+          <div className="w-10 h-10 rounded-xl bg-white/15 border border-white/25 text-white flex items-center justify-center group-hover:scale-105 transition-all">
+            <UserPlus className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-bold text-white text-xs">إضافة طالب جديد</div>
+            <div className="text-[10px] text-emerald-100 mt-0.5">تسجيل يدوي فوري</div>
+          </div>
+        </button>
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="بحث في قائمة الحفاظ بالاسم أو المعرف..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-3 pr-9 py-2.5 bg-slate-950/70 border border-slate-700/80 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          
-          {/* Monthly Export & PDF Report Buttons */}
-          {onOpenReportModal && (
-            <button
-              onClick={onOpenReportModal}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-rose-300 text-xs font-semibold transition-colors"
-              title="تقرير شهري (PDF)"
-            >
-              <FileText className="w-4 h-4 text-rose-400" />
-              <span>تقرير شهري (PDF)</span>
-            </button>
-          )}
-
-          {onExportExcel && (
-            <button
-              onClick={onExportExcel}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-300 text-xs font-semibold transition-colors"
-              title="تصدير شهري وشامل (Excel)"
-            >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-              <span>تصدير شهري (Excel)</span>
-            </button>
-          )}
-
-          <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-medium cursor-pointer transition-colors">
-            <Upload className="w-4 h-4 text-emerald-400" />
-            <span>استيراد Excel</span>
-            <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} className="hidden" />
-          </label>
-
-          <button
-            onClick={downloadStudentsTemplate}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-medium transition-colors"
-            title="تحميل نموذج إكسيل فارغ لتعبئة الطلاب"
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Filter className="w-3.5 h-3.5 text-slate-400" />
+          <select
+            value={selectedGroup}
+            onChange={(e) => setSelectedGroup(e.target.value)}
+            className="w-full sm:w-auto bg-slate-950/70 border border-slate-700/80 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium cursor-pointer"
           >
-            <Download className="w-4 h-4 text-sky-400" />
-            <span>قالب Excel</span>
-          </button>
-
-          <button
-            onClick={openAddModal}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/40"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>إضافة طالب</span>
-          </button>
-
+            <option value="ALL">كافة الأفواج والحلقات ({students.length})</option>
+            {groups.map((grp) => (
+              <option key={grp} value={grp}>{grp}</option>
+            ))}
+          </select>
         </div>
-
       </div>
 
       {/* Students Table */}
@@ -237,11 +262,9 @@ export const StudentsRosterTab: React.FC<StudentsRosterTabProps> = ({
           <table className="w-full text-right text-xs border-collapse">
             <thead>
               <tr className="bg-slate-950/80 border-b border-slate-800 text-slate-400 font-bold text-[11px]">
-                <th className="py-3 px-3 w-12 text-center">#</th>
+                <th className="py-3 px-3 text-center min-w-[100px] w-28">المعرف الوحيد (ID)</th>
                 <th className="py-3 px-4 min-w-[200px]">اسم ولقب الطالب</th>
-                <th className="py-3 px-3 min-w-[120px]">المعرف</th>
                 <th className="py-3 px-3 min-w-[180px]">الفوج / الحلقة</th>
-                <th className="py-3 px-3 min-w-[140px]">مستوى الحفظ</th>
                 <th className="py-3 px-3 min-w-[140px]">الهاتف والبريد</th>
                 <th className="py-3 px-4 w-24 text-center">الإجراءات</th>
               </tr>
@@ -250,40 +273,28 @@ export const StudentsRosterTab: React.FC<StudentsRosterTabProps> = ({
             <tbody className="divide-y divide-slate-800/60">
               {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500 text-xs">
+                  <td colSpan={5} className="py-12 text-center text-slate-500 text-xs">
                     لا يوجد طلاب مطابقين للبحث
                   </td>
                 </tr>
               ) : (
-                filteredStudents.map((st, idx) => (
+                filteredStudents.map((st) => (
                   <tr key={st.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="py-3 px-3 text-center text-slate-500 font-mono text-[11px]">
-                      {idx + 1}
+                    {/* Unique ID as First Column */}
+                    <td className="py-3 px-3 text-center">
+                      <span className="inline-block font-mono font-bold text-xs text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-500/30">
+                        #{st.id}
+                      </span>
                     </td>
 
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-8 h-8 rounded-xl ${st.avatarColor || 'bg-emerald-600'} text-white flex items-center justify-center font-bold text-xs shrink-0`}>
-                          {st.lastName.charAt(0)}
-                        </div>
-                        <div className="font-bold text-slate-100">
-                          {st.lastName} {st.firstName}
-                        </div>
+                      <div className="font-bold text-slate-100 text-xs sm:text-sm">
+                        {st.lastName} {st.firstName}
                       </div>
-                    </td>
-
-                    <td className="py-3 px-3 font-mono text-emerald-400 text-xs font-semibold">
-                      {st.id}
                     </td>
 
                     <td className="py-3 px-3 text-slate-300 font-medium">
                       {st.group || '—'}
-                    </td>
-
-                    <td className="py-3 px-3">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        {st.hizbProgress || 'قيد المتابعة'}
-                      </span>
                     </td>
 
                     <td className="py-3 px-3 text-slate-400 text-[11px] space-y-0.5">

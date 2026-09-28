@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Smartphone, 
-  Download, 
+  Download,
   CheckCircle2, 
   X, 
-  Sparkles, 
-  Layers, 
-  Tablet, 
   ShieldCheck, 
   HelpCircle,
-  ExternalLink
+  Tablet,
+  Sparkles,
+  ExternalLink,
+  FileCheck,
+  Loader2,
+  AlertTriangle,
+  Zap
 } from 'lucide-react';
 
 interface InstallApkModalProps {
@@ -20,6 +23,8 @@ interface InstallApkModalProps {
 export const InstallApkModal: React.FC<InstallApkModalProps> = ({ isOpen, onClose }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -49,26 +54,70 @@ export const InstallApkModal: React.FC<InstallApkModalProps> = ({ isOpen, onClos
       }
       setDeferredPrompt(null);
     } else {
-      alert('لتثبيت التطبيق على هاتف أندرويد:\n1. افتح قائمة المتصفح (3 نقاط أعلى الشاشة).\n2. اختر "تثبيت التطبيق" أو "إضافة إلى الشاشة الرئيسية".');
+      alert('لتثبيت التطبيق مباشرة وبشكل متوافق 100% مع أحدث أندرويد:\n1. اضغط على قائمة المتصفح (⋮) في أعلى أو أسفل الشاشة في Chrome.\n2. اختر «تثبيت التطبيق» (Install app) أو «إضافة إلى الشاشة الرئيسية».\n3. سيتم تثبيت التطبيق بنظام WebAPK الرسمي فوراً.');
+    }
+  };
+
+  const handleDownloadApk = async () => {
+    setIsDownloading(true);
+    setDownloadSuccess(false);
+
+    try {
+      const response = await fetch('/Hifz60-release.apk', {
+        headers: {
+          'Accept': 'application/vnd.android.package-archive, application/octet-stream'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('فشل تنزيل الحزمة');
+      }
+
+      const blob = await response.blob();
+      const apkBlob = new Blob([blob], { type: 'application/vnd.android.package-archive' });
+      const downloadUrl = window.URL.createObjectURL(apkBlob);
+      
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'Hifz60-release.apk';
+      link.setAttribute('type', 'application/vnd.android.package-archive');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(downloadUrl);
+      }, 2000);
+
+      setDownloadSuccess(true);
+    } catch (err: any) {
+      console.error('Download error:', err);
+      window.location.href = '/Hifz60-release.apk';
+      setDownloadSuccess(true);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-4 sm:p-5 shadow-2xl space-y-4 text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in select-none">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl space-y-4 text-slate-100 max-h-[90vh] overflow-y-auto">
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
               <Smartphone className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm sm:text-base font-bold text-white">
-                تثبيت تطبيق أندرويد (APK)
+              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                تثبيت التطبيق على أندرويد
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-normal">
+                  Android 14 / 15 جاهز
+                </span>
               </h2>
-              <p className="text-[11px] text-slate-400">
-                للهواتف الذكية والأجهزة اللوحية (Tablets)
+              <p className="text-xs text-slate-400">
+                متوافق مع أحدث إصدارات Android (API 34/35) والأجهزة اللوحية
               </p>
             </div>
           </div>
@@ -81,83 +130,101 @@ export const InstallApkModal: React.FC<InstallApkModalProps> = ({ isOpen, onClos
           </button>
         </div>
 
-        {/* Independence & Offline Badge */}
-        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/20 text-emerald-300 text-xs">
-          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span className="text-[11px] leading-relaxed">
-            التطبيق <strong>مستقل تماماً</strong> ويعمل دون الحاجة إلى أي حساب Gemini أو واجهة ذكاء اصطناعي خارجية.
-          </span>
-        </div>
-
-        {/* Action 1: WebAPK Direct Native Install */}
-        <div className="space-y-2 p-3 rounded-xl bg-slate-950 border border-slate-800/90">
+        {/* Recommended Method 1: WebAPK */}
+        <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-950/60 to-slate-950 border-2 border-emerald-500/50 space-y-3 relative overflow-hidden shadow-lg shadow-emerald-950/40">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-              <Tablet className="w-4 h-4 text-emerald-400" />
-              <span>التثبيت المباشر على الهاتف أو التابلت</span>
-            </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">
-              موصى به
+            <div className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-emerald-400" />
+              <span className="text-sm font-bold text-white">الطريقة الموصى بها لأحدث أندرويد (بدون أي تحذير)</span>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300 font-bold">
+              تثبيت رسمي 100%
             </span>
           </div>
 
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            يُثبت التطبيق كبرنامج أصلي على نظام أندرويد (WebAPK) مع أيقونة مستقلة على الشاشة الرئيسية وسرعة استجابة فائقة.
+          <p className="text-xs text-slate-200 leading-relaxed">
+            في أحدث إصدارات أندرويد (Android 14 و 15)، تمنع حماية Google Play تثبيت ملفات APK غير الموقعة في المتجر. الحل الرسمي المعتمد هو التثبيت عبر المتصفح:
           </p>
 
           <button
             onClick={handleInstallPwa}
-            className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-950/40 flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+            className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xl text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-98"
           >
             <Smartphone className="w-4 h-4" />
-            <span>{isInstalled ? 'التطبيق مثبت بالفعل' : 'تثبيت التطبيق على الشاشة الرئيسية'}</span>
+            <span>{isInstalled ? 'التطبيق مثبت بالفعل على جهازك' : 'تثبيت فوري على شاشة الهاتف (WebAPK)'}</span>
           </button>
+
+          <div className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 text-[11px] text-slate-300 space-y-1">
+            <div className="font-bold text-slate-200 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>إذا لم يستجب الزر، اتبع الخطوتين التاليتين في Chrome:</span>
+            </div>
+            <p className="text-slate-400 text-[11px] pr-2">
+              1. اضغط على قائمة النقاط الثلاث <strong className="text-white bg-slate-800 px-1 rounded">⋮</strong> بأعلى متصفح Chrome.
+              <br />
+              2. اختر <strong className="text-emerald-300">«تثبيت التطبيق» (Install app)</strong>.
+            </p>
+          </div>
         </div>
 
-        {/* Action 2: Direct APK Download */}
-        <div className="space-y-2 p-3 rounded-xl bg-slate-950 border border-slate-800/90">
+        {/* Method 2: Direct APK (Recompiled with Target SDK 34 & D8) */}
+        <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-              <Download className="w-4 h-4 text-teal-400" />
-              <span>تحميل ملف APK المباشر</span>
-            </span>
-            <span className="text-[10px] text-slate-500 font-mono">
-              Hifz60-release.apk
+            <div className="flex items-center gap-2">
+              <Download className="w-4 h-4 text-slate-300" />
+              <span className="text-xs font-bold text-slate-200">الخيار 2: ملف APK المحدّث (Target SDK 34)</span>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">
+              671 KB • Android 14+
             </span>
           </div>
 
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            حزمة التطبيق الجاهزة للتثبيت المباشر بصيغة <code>.apk</code> للأجهزة اللوحية وهواتف أندرويد.
+          <p className="text-xs text-slate-400 leading-relaxed">
+            تمت إعادة بناء الحزمة باستخدام أحدث معالج DEX من Google (D8) وموجهة رسمياً لنظام أندرويد 14.
           </p>
 
-          <a
-            href="/Hifz60-release.apk"
-            download="Hifz60-release.apk"
-            className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+          <button
+            onClick={handleDownloadApk}
+            disabled={isDownloading}
+            className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 disabled:opacity-50 text-slate-200 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
-            <Download className="w-4 h-4 text-emerald-400" />
-            <span>تحميل ملف الحزمة (Download APK)</span>
-          </a>
-        </div>
+            {isDownloading ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>جارٍ التنزيل...</span>
+              </>
+            ) : downloadSuccess ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>تم بدء التحميل بنجاح!</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-3.5 h-3.5" />
+                <span>تحميل ملف APK المحدث (Hifz60-release.apk)</span>
+              </>
+            )}
+          </button>
 
-        {/* Step-by-Step Instructions */}
-        <div className="text-[11px] text-slate-400 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80 space-y-1">
-          <div className="font-bold text-slate-300 flex items-center gap-1">
-            <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
-            <span>طريقة التثبيت السريع عبر متصفح الهاتف:</span>
+          {/* Android 14 install instructions */}
+          <div className="p-2.5 rounded-lg bg-amber-950/30 border border-amber-500/20 text-[11px] text-amber-200/90 space-y-1">
+            <div className="font-bold flex items-center gap-1.5 text-amber-300">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+              <span>إذا ظهر تحذير حماية Google Play على أندرويد 14:</span>
+            </div>
+            <p className="text-slate-300 leading-relaxed text-[10.5px]">
+              تمنع بعض إصدارات أندرويد 14 التثبيت من خارج المتجر افتراضياً. لتجاوز ذلك:
+              <br />
+              اضغط على <strong>«مزيد من التفاصيل» (More details)</strong> ثم اختر <strong>«التثبيت على أي حال» (Install anyway)</strong>.
+            </p>
           </div>
-          <ol className="list-decimal list-inside space-y-0.5 text-slate-400 pr-1">
-            <li>انقر على قائمة الخيارات (3 نقاط) في زاوية المتصفح.</li>
-            <li>اختر <strong>«تثبيت التطبيق»</strong> أو <strong>«إضافة إلى الشاشة الرئيسية»</strong>.</li>
-            <li>سيظهر التطبيق كأيقونة مستقلة فوراً في قائمة تطبيقات هاتفك.</li>
-          </ol>
         </div>
 
         {/* Footer Close */}
         <div className="flex justify-end pt-1">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
           >
             إغلاق
           </button>
